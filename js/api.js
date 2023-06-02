@@ -7,13 +7,20 @@ const loadImage = (src) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.src = src;
-    img.crossOrigin = "Anonymous"; // Nécessaire pour contourner les restrictions CORS lors du chargement d'images à partir d'un autre domaine
+    img.crossOrigin = "Anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
   });
 };
 
-const getSlide = async (movie) => {
+const truncateText = (text, length) => {
+  if (text.length <= length) {
+    return text;
+  }
+  let subString = text.substr(0, length - 1);
+  return subString.substr(0, subString.lastIndexOf(" ")) + "...";
+};
+const getSlide = async (movie, isLast) => {
   const img = await loadImage(
     `https://image.tmdb.org/t/p/w300${movie.poster_path}`
   );
@@ -28,17 +35,19 @@ const getSlide = async (movie) => {
       ? "black"
       : "white";
   slide.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}" 
-            alt= "Affiche du film ${movie.title}"/>
-        <div><h1>${movie.title}</h1>
-        <p>${movie.overview}</p></div>
-    `;
+      ${isLast ? '<i class="bi bi-arrow-bar-up"></i>' : ""}
+      <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}" 
+          alt= "Affiche du film ${movie.title}"/>
+      <div><h1>${movie.title}</h1>
+      <p>${truncateText(movie.overview, 200)}</p></div>
+  `;
   return slide;
 };
 
-for (const movie of movies) {
+for (let i = 0; i < movies.length; i++) {
+  const movie = movies[i];
   try {
-    const slide = await getSlide(movie);
+    const slide = await getSlide(movie, i === movies.length - 1);
     carousel.appendChild(slide);
   } catch (error) {
     console.error(`Failed to create slide for movie: ${movie.title}`, error);
